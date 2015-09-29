@@ -22,7 +22,7 @@ func main() {
 	var waitGroup sync.WaitGroup
 
 	// Create a list of watches
-	watches := make([]efsw.Watch, len(os.Args) - 1)
+	watches := make([]*efsw.Watch, len(os.Args) - 1)
 
 	// Loop over every path that we want to monitor and spawn a goroutine with
 	// a watcher
@@ -31,7 +31,11 @@ func main() {
 		waitGroup.Add(1)
 
 		// Create the watch with a 10 event buffer
-		watch := efsw.NewWatch(path, true, 10)
+		watch, err := efsw.NewWatch(path, true, 10)
+		if err != nil {
+			// We didn't touch the path, so this must be an OS-level problem
+			panic(err)
+		}
 
 		// Record it
 		watches[i] = watch

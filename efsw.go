@@ -9,8 +9,15 @@ import "C"
 
 import (
 	// System imports
+	"errors"
 	"sync"
 	"unsafe"
+	"unicode/utf8"
+)
+
+// Error definitions
+var (
+	ErrInvalidPathEncoding = errors.New("invalid path encoding or content")
 )
 
 // Event types (set to match efsw's API)
@@ -95,8 +102,31 @@ func watcherCallback(
 	}
 }
 
+// Validates a string as UTF-8 with no null bytes
+func isValidNonNullUTF8(s string) bool {
+	// Check that this is valid UTF-8
+	if !utf8.ValidString(s) {
+		return false
+	}
+
+	// Check that there are no null-bytes (which are allowed by UTF-8)
+	for i := 0; i < len(s); i++ {
+		if s[i] == 0 {
+			return false
+		}
+	}
+
+	// All done
+	return true
+}
+
 // Watch factory.  The path argument should be UTF-8 encoded.
-func NewWatch(path string, recursive bool, buffer int) Watch {
+func NewWatch(path string, recursive bool, buffer int) (*Watch, error) {
+	// Validate the path
+	if !isValidNonNullUTF8(path) {
+		return nil, ErrInvalidPathEncoding
+	}
+
 	// Lock the API and watch-to-channel map for writing
 	lock.Lock()
 	defer lock.Unlock()
@@ -135,11 +165,11 @@ func NewWatch(path string, recursive bool, buffer int) Watch {
 	dispatchMap[watchId] = channel
 
 	// All done
-	return Watch{watchId, channel}
+	return &Watch{watchId, channel}, nil
 }
 
 // Removes a watch
-func DeleteWatch(watch Watch) {
+func DeleteWatch(watch *Watch) {
 	// Lock the API and watch-to-channel map for writing
 	lock.Lock()
 	defer lock.Unlock()
