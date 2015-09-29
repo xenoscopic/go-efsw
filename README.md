@@ -95,7 +95,7 @@ or similar.
 If you don't call the `efsw.DeleteWatch` function, the watch will continue,
 dropping events if they aren't pulled off the event channel.  This won't hurt
 anything, but it will consume resources, so it's best to stop the watch when
-it's not longer needed.
+it's no longer needed.
 
 
 ## Caveats
@@ -127,6 +127,6 @@ your survival.
 ## TODO:
 
 - It might be nicer if watch event buffers dropped older events first, but such
-  a "ring channel" is a bit complicated to implement in Go.  In any case, events
-  should be serviced regularly, but perhaps it would be nice to have an option
-  to control this behavior.
+  a "ring channel" is a bit complicated to implement in Go.  In practice, events
+  should be serviced regularly, so this shouldn't be a problem, but perhaps it
+  would be nice to have an option to control this behavior.
