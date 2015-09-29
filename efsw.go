@@ -46,8 +46,8 @@ type Watch struct {
 // Global watcher
 var watcher C.efsw_watcher
 
-// Global map from watch key to event channel (necessary since we can't
-// associate a persistent (non-GC'd) pointer with the C callback)
+// Global map from watch id to event channel (necessary since we can't associate
+// a persistent (non-GC'd) pointer with the C callback)
 var dispatchMap = make(map[C.efsw_watchid]chan Event)
 
 // Global lock designed to coordinate access to the efsw API (which is not
@@ -66,7 +66,8 @@ func watcherCallback(
 	directory,
 	filename *C.char,
 	action C.int,
-	oldFilename *C.char) {
+	oldFilename *C.char,
+) {
 	// Lock the watch-to-channel map for reading
 	lock.Lock()
 	defer lock.Unlock()
@@ -84,7 +85,8 @@ func watcherCallback(
 		C.GoString(directory),
 		C.GoString(filename),
 		int(action),
-		C.GoString(oldFilename)}
+		C.GoString(oldFilename),
+	}
 
 	// Dispatch the event if immediately possible, otherwise discard it
 	select {
@@ -93,7 +95,7 @@ func watcherCallback(
 	}
 }
 
-// Watch factory
+// Watch factory.  The path argument should be UTF-8 encoded.
 func NewWatch(path string, recursive bool, buffer int) Watch {
 	// Lock the API and watch-to-channel map for writing
 	lock.Lock()
@@ -123,7 +125,8 @@ func NewWatch(path string, recursive bool, buffer int) Watch {
 	watchId := C.go_efsw_add_watch(
 		watcher,
 		pathCString,
-		recursiveCInt)
+		recursiveCInt,
+	)
 
 	// Create the event channel
 	channel := make(chan Event, buffer)

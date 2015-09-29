@@ -30,7 +30,7 @@ func main() {
 		// Add another entry to wait for
 		waitGroup.Add(1)
 
-		// Create the watch
+		// Create the watch with a 10 event buffer
 		watch := efsw.NewWatch(path, true, 10)
 
 		// Record it
@@ -48,7 +48,8 @@ func main() {
 					efsw.EventTypeToName[e.Type],
 					e.Filename,
 					e.OldFilename,
-					e.Directory)
+					e.Directory,
+				)
 			}
 
 			// Say we're done
@@ -69,6 +70,7 @@ func main() {
 			efsw.DeleteWatch(w)
 		}
 		waitGroup.Wait()
+		fmt.Println("До свидания!")
 		break
 	}
 }
